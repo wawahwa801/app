@@ -4,16 +4,21 @@ Speedbump puts friction in front of short-video feeds. You can still get in, but
 
 ## What works where
 
-iOS doesn't allow any third-party app to change or detect sections inside another app. Screen Time can only shield a whole app, which would also block Instagram DMs and long YouTube videos. So the iPhone version works in Safari instead.
+iOS gives apps no way to change or inspect another app's screens directly. Screen Time can only shield a whole app, which would also block Instagram DMs and long YouTube videos. So the iPhone version has two parts:
 
-| | Android | iPhone |
-|---|---|---|
-| Instagram Reels | In the app | instagram.com in Safari |
-| YouTube Shorts | In the app | youtube.com in Safari |
-| WeChat Channels | In the app | Not possible |
-| Wait or AIME wall | Yes | Yes |
-| Hide Instagram counts | In the app | instagram.com in Safari |
-| Reels sent in a DM still play | Yes | Yes, in Safari |
+- **Safari extension:** a real block on instagram.com and youtube.com.
+- **Screen broadcast (experimental):** reads your screen on the phone to notice Reels and Shorts in the real apps. With a free Apple ID it can only keep alerting you, because closing or shielding an app needs Apple's Family Controls capability, which requires a paid developer account.
+
+| | Android | iPhone, Safari | iPhone, real apps |
+|---|---|---|---|
+| Instagram Reels | Block | Block | Repeated alerts |
+| YouTube Shorts | Block | Block | Repeated alerts |
+| WeChat Channels | Block | Not possible | Not detected |
+| Wait or AIME wall | Yes | Yes | Opens from an alert |
+| Hide Instagram counts | Yes | Yes | Not possible |
+| Reels sent in a DM still play | Yes | Yes | Yes, with a weaker swipe check |
+
+The broadcast's detection rules have never been checked against real screens. They're in `ios/Shared/ScreenClassifier.swift`. It can only notice a swipe to a new reel when the "Follow" button shows the author's name beside it.
 
 ## How it behaves
 
@@ -28,6 +33,8 @@ iOS doesn't allow any third-party app to change or detect sections inside anothe
 ## Privacy
 
 The Android app has no internet permission and reads only Instagram, YouTube and WeChat. It saves your settings and a small amount of navigation state, which holds a hash of a reel's author and never the name. The Safari extension runs only on instagram.com and youtube.com and makes no network requests of its own.
+
+While it's running, the iPhone screen broadcast can see everything on your screen, including messages and anything you type. Speedbump reads the text from one frame every 1.5 seconds on the phone, then discards it. It saves no frames or text, and it sends nothing anywhere. Stop the broadcast from Control Center or the red status indicator whenever you want.
 
 ## Android setup
 
@@ -46,16 +53,23 @@ Google Play restricts Accessibility Service use, so check its current policy bef
 
 ## iPhone setup
 
-Requires a Mac with Xcode.
+Requires a Mac with Xcode and an Apple ID. A free Apple ID works, but the app stops opening after 7 days until you install it again from Xcode. Free accounts also limit how many apps and app IDs you can use, and each extension may count toward those limits.
 
-```sh
-brew install xcodegen
-cd ios
-xcodegen
-open Speedbump.xcodeproj
-```
+1. In Xcode, add your Apple ID under **Settings > Accounts** and note your team ID.
+2. In `ios/Signing.xcconfig`, set `DEVELOPMENT_TEAM` to your team ID, and set `BUNDLE_PREFIX` to something unique to you.
+3. Generate and open the project:
 
-Choose your team under Signing for both targets and run on your iPhone. Then follow the steps shown in the app to enable the extension in Safari.
+   ```sh
+   brew install xcodegen
+   cd ios
+   xcodegen
+   open Speedbump.xcodeproj
+   ```
+
+4. Connect your iPhone, select it as the destination, and run the **Speedbump** scheme. iOS may also ask you to turn on Developer Mode and to trust your developer profile under **Settings > General > VPN & Device Management**.
+5. In the app, allow notifications and start the broadcast. In iPhone Settings, under **Notifications**, turn on **Screen Sharing** so alerts can appear during the broadcast. Enable the Safari extension as the app describes.
+
+The broadcast has to be started by hand, and may need restarting after you lock your phone.
 
 ## Tests
 
@@ -65,6 +79,10 @@ cd android && ./gradlew :app:testDebugUnitTest   # detection, DM rules, metrics,
 cd ios/tests
 npm i --no-save jsdom@22
 node --test .                                    # URL rules and the content script
+
+cd ios && xcodegen
+xcodebuild test -project Speedbump.xcodeproj -scheme Speedbump \
+  -destination 'platform=iOS Simulator,name=iPhone 17'   # classifier, sent reels, OCR on drawn screens
 ```
 
 `android/fixture` is a test-only app that borrows Instagram's package name, so the real service can be exercised on an emulator. Install it only on an emulator without the real Instagram, and never publish it.

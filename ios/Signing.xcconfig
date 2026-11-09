@@ -1,0 +1,4 @@
+// Before installing on a phone: set your team, and a prefix nobody else has registered.
+// Xcode > Settings > Accounts shows your team after you add a free Apple ID.
+DEVELOPMENT_TEAM =
+BUNDLE_PREFIX = io.github.wawahwa801

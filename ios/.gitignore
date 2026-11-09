@@ -1,5 +1,9 @@
 *.xcodeproj
 Speedbump/Info.plist
+Speedbump/Speedbump.entitlements
 SafariExtension/Info.plist
+BroadcastExtension/Info.plist
+BroadcastExtension/Broadcast.entitlements
 xcuserdata/
 DerivedData/
+build/

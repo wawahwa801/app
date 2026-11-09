@@ -1,27 +1,48 @@
 # Generate the Xcode project with:  brew install xcodegen && cd ios && xcodegen
 name: Speedbump
 options:
-  bundleIdPrefix: app.speedbump
   deploymentTarget:
     iOS: "16.0"
+configFiles:
+  Debug: Signing.xcconfig
+  Release: Signing.xcconfig
 settings:
   base:
     SWIFT_VERSION: "5.0"
-    MARKETING_VERSION: "0.1.0"
+    MARKETING_VERSION: "0.2.0"
     CURRENT_PROJECT_VERSION: "1"
+    CODE_SIGN_STYLE: Automatic
 targets:
   Speedbump:
     type: application
     platform: iOS
-    sources: [Speedbump]
+    sources:
+      - Speedbump
+      - Shared
+      - path: ../shared/aime-problems.json
+        buildPhase: resources
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: $(BUNDLE_PREFIX).speedbump
+        CODE_SIGN_ENTITLEMENTS: Speedbump/Speedbump.entitlements
+    entitlements:
+      path: Speedbump/Speedbump.entitlements
+      properties:
+        com.apple.security.application-groups: [group.$(BUNDLE_PREFIX).speedbump]
     info:
       path: Speedbump/Info.plist
       properties:
         CFBundleDisplayName: Speedbump
         UILaunchScreen: {}
         UISupportedInterfaceOrientations: [UIInterfaceOrientationPortrait]
+        SpeedbumpAppGroup: group.$(BUNDLE_PREFIX).speedbump
+        SpeedbumpBroadcastExtension: $(BUNDLE_PREFIX).speedbump.broadcast
+        CFBundleURLTypes:
+          - CFBundleURLName: speedbump
+            CFBundleURLSchemes: [speedbump]
     dependencies:
       - target: SpeedbumpExtension
+      - target: SpeedbumpBroadcast
   SpeedbumpExtension:
     type: app-extension
     platform: iOS
@@ -30,6 +51,9 @@ targets:
       - path: SafariExtension/Resources
         type: folder
         buildPhase: resources
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: $(BUNDLE_PREFIX).speedbump.safari
     info:
       path: SafariExtension/Info.plist
       properties:
@@ -37,3 +61,43 @@ targets:
         NSExtension:
           NSExtensionPointIdentifier: com.apple.Safari.web-extension
           NSExtensionPrincipalClass: $(PRODUCT_MODULE_NAME).SafariWebExtensionHandler
+  SpeedbumpBroadcast:
+    type: app-extension
+    platform: iOS
+    sources:
+      - BroadcastExtension
+      - Shared
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: $(BUNDLE_PREFIX).speedbump.broadcast
+        CODE_SIGN_ENTITLEMENTS: BroadcastExtension/Broadcast.entitlements
+    entitlements:
+      path: BroadcastExtension/Broadcast.entitlements
+      properties:
+        com.apple.security.application-groups: [group.$(BUNDLE_PREFIX).speedbump]
+    info:
+      path: BroadcastExtension/Info.plist
+      properties:
+        CFBundleDisplayName: Speedbump
+        SpeedbumpAppGroup: group.$(BUNDLE_PREFIX).speedbump
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.broadcast-services-upload
+          NSExtensionPrincipalClass: $(PRODUCT_MODULE_NAME).SampleHandler
+          RPBroadcastProcessMode: RPBroadcastProcessModeSampleBuffer
+  SpeedbumpTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - SpeedbumpTests
+      - Shared
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: $(BUNDLE_PREFIX).speedbump.tests
+        GENERATE_INFOPLIST_FILE: YES
+schemes:
+  Speedbump:
+    build:
+      targets:
+        Speedbump: all
+    test:
+      targets: [SpeedbumpTests]
