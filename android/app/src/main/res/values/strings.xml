@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">Speedbump</string>
+    <string name="service_description">Speedbump looks at the screen structure of Instagram, YouTube and WeChat, and of no other app, to find short-video feeds and Instagram metric counts. It stores no screen content, and it has no internet permission, so nothing it reads can leave your phone.</string>
+</resources>

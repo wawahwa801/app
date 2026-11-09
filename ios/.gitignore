@@ -1,0 +1,5 @@
+*.xcodeproj
+Speedbump/Info.plist
+SafariExtension/Info.plist
+xcuserdata/
+DerivedData/

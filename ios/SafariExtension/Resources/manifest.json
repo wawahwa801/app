@@ -1,0 +1,15 @@
+{
+  "manifest_version": 3,
+  "name": "Speedbump",
+  "version": "0.1.0",
+  "description": "Adds a wait or a math problem before Reels and Shorts, and hides Instagram counts.",
+  "permissions": ["storage"],
+  "action": { "default_popup": "popup.html", "default_title": "Speedbump" },
+  "content_scripts": [
+    {
+      "matches": ["*://*.instagram.com/*", "*://*.youtube.com/*"],
+      "js": ["problems.js", "rules.js", "content.js"],
+      "run_at": "document_start"
+    }
+  ]
+}

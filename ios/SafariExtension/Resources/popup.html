@@ -1,0 +1,36 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  :root { color-scheme: light dark; }
+  body { margin: 0; padding: 16px; min-width: 280px; font: 16px/1.4 -apple-system, system-ui, sans-serif; background: Canvas; color: CanvasText; }
+  h2 { font-size: 15px; margin: 18px 0 6px; }
+  h2:first-child { margin-top: 0; }
+  label { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 7px 0; }
+  select { font: inherit; }
+</style>
+</head>
+<body>
+  <h2>Sections to block</h2>
+  <label>Instagram Reels <input type="checkbox" id="blockInstagram"></label>
+  <label>YouTube Shorts <input type="checkbox" id="blockYoutube"></label>
+  <h2>To get past a block</h2>
+  <label>Wait one minute <input type="radio" name="mode" value="wait"></label>
+  <label>Solve an AIME-style problem <input type="radio" name="mode" value="aime"></label>
+  <label>Stay open for
+    <select id="unlockMinutes">
+      <option value="1">1 min</option>
+      <option value="5">5 min</option>
+      <option value="15">15 min</option>
+    </select>
+  </label>
+  <h2>Hide on Instagram</h2>
+  <label>Like counts <input type="checkbox" id="hideLikes"></label>
+  <label>View counts <input type="checkbox" id="hideViews"></label>
+  <label>Follower counts <input type="checkbox" id="hideFollowers"></label>
+  <script src="rules.js"></script>
+  <script src="popup.js"></script>
+</body>
+</html>

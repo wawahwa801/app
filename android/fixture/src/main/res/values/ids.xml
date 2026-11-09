@@ -1,0 +1,11 @@
+<resources>
+    <item name="tab_bar" type="id" />
+    <item name="feed_tab" type="id" />
+    <item name="row_feed_textview_likes" type="id" />
+    <item name="row_thread_composer_edittext" type="id" />
+    <item name="direct_thread_message" type="id" />
+    <item name="clips_viewer_view_pager" type="id" />
+    <item name="open_thread" type="id" />
+    <item name="open_reel" type="id" />
+    <item name="open_sent_reel" type="id" />
+</resources>
