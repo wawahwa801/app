@@ -41,14 +41,22 @@ While it's running, the iPhone screen broadcast can see everything on your scree
 
 ## Android setup
 
-Requires JDK 17 and the Android SDK (Android Studio includes both).
+Requires an Android phone running Android 9 or later. Building the app requires JDK 17 and the Android SDK (Android Studio includes both).
 
-```sh
-cd android
-./gradlew :app:installDebug
-```
+1. Build the app:
 
-Then open Speedbump and turn it on in Accessibility settings. If Android says the setting is restricted, open Speedbump's App info, tap ⋮, choose **Allow restricted settings**, and try again.
+   ```sh
+   cd android
+   ./gradlew :app:assembleDebug
+   ```
+
+2. Move `android/app/build/outputs/apk/debug/app-debug.apk` to your phone by USB, Google Drive or email. Don't install the `fixture` app, which is a test app that pretends to be Instagram.
+3. Open the file on your phone, and allow installs from that source when asked.
+4. Open Speedbump, tap **Open Accessibility settings**, find Speedbump in the list, and turn it on. The menu's location varies by phone brand.
+5. If Android says the setting is restricted, go to **Settings > Apps > Speedbump**, tap ⋮, choose **Allow restricted settings**, and try step 4 again.
+6. Choose wait or AIME, and turn on any counts you want hidden.
+
+To test it, open Reels and check that you hit the wall. Then open a reel from a DM. It should play, and swiping to the next one should bring up the wall.
 
 The in-app rules rely on the view ids and activity names these apps use today, and those change between app versions. If a block stops firing or fires in the wrong place, update `core/Detector.kt`.
 
@@ -56,11 +64,11 @@ Google Play restricts Accessibility Service use, so check its current policy bef
 
 ## iPhone setup
 
-Requires a Mac with Xcode and an Apple ID. A free Apple ID works, but the app stops opening after 7 days until you install it again from Xcode. Free accounts also limit how many apps and app IDs you can use, and each extension may count toward those limits.
+Requires a Mac with Xcode, an iPhone, a USB cable and an Apple ID. A free Apple ID works, but the app stops opening after 7 days until you press **Run** in Xcode again. Free accounts also limit how many apps and app IDs you can use, and each extension may count toward those limits. The wall in front of Instagram needs iOS 26 or later.
 
-1. In Xcode, add your Apple ID under **Settings > Accounts** and note your team ID.
-2. In `ios/Signing.xcconfig`, set `DEVELOPMENT_TEAM` to your team ID, and set `BUNDLE_PREFIX` to something unique to you.
-3. Generate and open the project:
+### Install the app
+
+1. Generate and open the project:
 
    ```sh
    brew install xcodegen
@@ -69,14 +77,42 @@ Requires a Mac with Xcode and an Apple ID. A free Apple ID works, but the app st
    open Speedbump.xcodeproj
    ```
 
-4. Connect your iPhone, select it as the destination, and run the **Speedbump** scheme. iOS may also ask you to turn on Developer Mode and to trust your developer profile under **Settings > General > VPN & Device Management**.
-5. In the app, allow notifications and start the broadcast. In iPhone Settings, under **Notifications**, turn on **Screen Sharing** so alerts can appear during the broadcast. Enable the Safari extension as the app describes.
+2. In Xcode, add your Apple ID under **Settings > Accounts**.
+3. Plug in your iPhone, tap **Trust** on the phone, and select it at the top of the Xcode window.
+4. Click the blue **Speedbump** project in the left sidebar. Under **Signing & Capabilities**, choose your name as the Team for the `Speedbump`, `SpeedbumpExtension` and `SpeedbumpBroadcast` targets.
+5. Press **Run**. If iOS asks for Developer Mode, turn it on under **Settings > Privacy & Security** and restart the phone.
+6. If the app won't open, go to **Settings > General > VPN & Device Management** and trust your Apple ID.
 
-The broadcast has to be started by hand, and may need restarting after you lock your phone.
+If Xcode says the app's ID is taken, change `BUNDLE_PREFIX` in `ios/Signing.xcconfig` to something unique to you, then run `xcodegen` again in the `ios` folder. A free account may also reject App Groups, which has not been tested.
 
-To add the wall in front of Instagram, open Shortcuts, tap **Automation**, then **+**. Choose **App**, select Instagram with **Is Opened** on, choose **Run Immediately**, and turn off **Notify When Run**. Then tap **New Blank Automation** and add **Check Instagram Speedbump**. Apps can't create automations themselves, so this step is manual.
+### Add the wall in front of Instagram
+
+Apps can't create automations themselves, so this step is manual.
+
+1. Open **Shortcuts**, tap **Automation**, then **+**.
+2. Choose **App**, select Instagram, and leave **Is Opened** on.
+3. Choose **Run Immediately**, and turn off **Notify When Run**.
+4. Tap **New Blank Automation**, and add **Check Instagram Speedbump**.
 
 The Messages button opens Safari through an undocumented `x-safari-https://` link, which could stop working in a future iOS update.
+
+### Get Reels and Shorts alerts (optional)
+
+1. In Speedbump, tap **Allow notifications**, then **Start watching my screen**.
+2. In **Settings > Notifications**, turn on **Screen Sharing** so alerts can appear during the broadcast.
+
+The broadcast may need restarting after you lock your phone.
+
+## Safari on iPhone setup
+
+The extension comes with the iPhone app, so install that first. It's built for iPhone, so it doesn't run in Safari on a Mac.
+
+1. Go to **Settings > Apps > Safari > Extensions** (on older iOS, **Settings > Safari > Extensions**).
+2. Turn on **Speedbump**, and allow it on instagram.com and youtube.com.
+3. In Safari, go to instagram.com and log in.
+4. Tap the extensions icon in the address bar, then **Speedbump**, and choose your wall type and which counts to hide.
+
+To test it, check that instagram.com/reels and any YouTube Short show the wall, and that long YouTube videos don't. Your DMs should open normally, and any counts you hid should be gone.
 
 ## Tests
 
