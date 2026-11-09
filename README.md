@@ -4,19 +4,22 @@ Speedbump puts friction in front of short-video feeds. You can still get in, but
 
 ## What works where
 
-iOS gives apps no way to change or inspect another app's screens directly. Screen Time can only shield a whole app, which would also block Instagram DMs and long YouTube videos. So the iPhone version has two parts:
+iOS gives apps no way to change or inspect another app's screens directly. Screen Time can only shield a whole app, which would also block Instagram DMs and long YouTube videos. So the iPhone version has three parts:
 
 - **Safari extension:** a real block on instagram.com and youtube.com.
+- **Wall on opening Instagram (iOS 26 or later):** a Shortcuts automation shows a Speedbump screen whenever Instagram opens. **Messages** opens your DMs in Safari, where Reels are walled. **Full Instagram** goes through the wall, then opens the real app for the time you chose. It walls the whole app, not just the Reels tab, and deleting the automation removes it.
 - **Screen broadcast (experimental):** reads your screen on the phone to notice Reels and Shorts in the real apps. With a free Apple ID it can only keep alerting you, because closing or shielding an app needs Apple's Family Controls capability, which requires a paid developer account.
 
 | | Android | iPhone, Safari | iPhone, real apps |
 |---|---|---|---|
-| Instagram Reels | Block | Block | Repeated alerts |
-| YouTube Shorts | Block | Block | Repeated alerts |
+| Instagram Reels | Block | Block | Wall on opening the app, then alerts |
+| YouTube Shorts | Block | Block | Alerts only |
 | WeChat Channels | Block | Not possible | Not detected |
-| Wait or AIME wall | Yes | Yes | Opens from an alert |
+| Wait or AIME wall | Yes | Yes | Yes |
 | Hide Instagram counts | Yes | Yes | Not possible |
-| Reels sent in a DM still play | Yes | Yes | Yes, with a weaker swipe check |
+| Reels sent in a DM still play | Yes | Yes | Through Messages, or with a weaker swipe check in the app |
+
+YouTube and WeChat have no wall on opening, because it would also interrupt long videos and chats. Use YouTube's Shorts feed limit or youtube.com in Safari, and try WeChat's Manage Discover setting to turn Channels off.
 
 The broadcast's detection rules have never been checked against real screens. They're in `ios/Shared/ScreenClassifier.swift`. It can only notice a swipe to a new reel when the "Follow" button shows the author's name beside it.
 
@@ -71,6 +74,10 @@ Requires a Mac with Xcode and an Apple ID. A free Apple ID works, but the app st
 
 The broadcast has to be started by hand, and may need restarting after you lock your phone.
 
+To add the wall in front of Instagram, open Shortcuts, tap **Automation**, then **+**. Choose **App**, select Instagram with **Is Opened** on, choose **Run Immediately**, and turn off **Notify When Run**. Then tap **New Blank Automation** and add **Check Instagram Speedbump**. Apps can't create automations themselves, so this step is manual.
+
+The Messages button opens Safari through an undocumented `x-safari-https://` link, which could stop working in a future iOS update.
+
 ## Tests
 
 ```sh
@@ -82,7 +89,7 @@ node --test .                                    # URL rules and the content scr
 
 cd ios && xcodegen
 xcodebuild test -project Speedbump.xcodeproj -scheme Speedbump \
-  -destination 'platform=iOS Simulator,name=iPhone 17'   # classifier, sent reels, OCR on drawn screens
+  -destination 'platform=iOS Simulator,name=iPhone 18 Pro'   # classifier, sent reels, OCR on drawn screens
 ```
 
 `android/fixture` is a test-only app that borrows Instagram's package name, so the real service can be exercised on an emulator. Install it only on an emulator without the real Instagram, and never publish it.

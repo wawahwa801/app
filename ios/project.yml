@@ -37,6 +37,7 @@ targets:
         UISupportedInterfaceOrientations: [UIInterfaceOrientationPortrait]
         SpeedbumpAppGroup: group.$(BUNDLE_PREFIX).speedbump
         SpeedbumpBroadcastExtension: $(BUNDLE_PREFIX).speedbump.broadcast
+        LSApplicationQueriesSchemes: [instagram, youtube]
         CFBundleURLTypes:
           - CFBundleURLName: speedbump
             CFBundleURLSchemes: [speedbump]
@@ -48,8 +49,9 @@ targets:
     platform: iOS
     sources:
       - path: SafariExtension/SafariWebExtensionHandler.swift
+      # Copied as files: manifest.json must sit at the bundle root, and a folder named
+      # Resources at the root makes the bundle unreadable.
       - path: SafariExtension/Resources
-        type: folder
         buildPhase: resources
     settings:
       base:
@@ -94,10 +96,24 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: $(BUNDLE_PREFIX).speedbump.tests
         GENERATE_INFOPLIST_FILE: YES
+  SpeedbumpUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    deploymentTarget: "16.4"
+    sources:
+      - SpeedbumpUITests
+      - path: ../shared/aime-problems.json
+        buildPhase: resources
+    dependencies:
+      - target: Speedbump
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: $(BUNDLE_PREFIX).speedbump.uitests
+        GENERATE_INFOPLIST_FILE: YES
 schemes:
   Speedbump:
     build:
       targets:
         Speedbump: all
     test:
-      targets: [SpeedbumpTests]
+      targets: [SpeedbumpTests, SpeedbumpUITests]

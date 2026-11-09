@@ -10,25 +10,42 @@ struct SpeedbumpApp: App {
     var body: some Scene {
         WindowGroup {
             SetupView()
-                .fullScreenCover(item: $router.site) { site in
-                    WallView(site: site)
+                .fullScreenCover(item: $router.destination) { destination in
+                    switch destination {
+                    case .gate: GateView()
+                    case .wall(let site): WallView(site: site)
+                    }
                 }
                 .onOpenURL { url in
-                    // speedbump://wall?site=instagram
-                    let items = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems
-                    router.site = items?.first { $0.name == "site" }?.value.flatMap(Site.init(rawValue:))
+                    // speedbump://gate or speedbump://wall?site=instagram
+                    if url.host == "gate" {
+                        router.destination = .gate
+                    } else {
+                        let items = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems
+                        router.destination = items?.first { $0.name == "site" }?.value
+                            .flatMap(Site.init(rawValue:))
+                            .map(Destination.wall)
+                    }
                 }
         }
     }
 }
 
-extension Site: Identifiable {
-    var id: String { rawValue }
+enum Destination: Identifiable {
+    case gate
+    case wall(Site)
+
+    var id: String {
+        switch self {
+        case .gate: return "gate"
+        case .wall(let site): return site.rawValue
+        }
+    }
 }
 
 final class WallRouter: ObservableObject {
     static let shared = WallRouter()
-    @Published var site: Site?
+    @Published var destination: Destination?
 }
 
 final class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDelegate {
@@ -47,7 +64,7 @@ final class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCent
     ) {
         let name = response.notification.request.content.userInfo["site"] as? String
         DispatchQueue.main.async {
-            WallRouter.shared.site = name.flatMap(Site.init(rawValue:))
+            WallRouter.shared.destination = name.flatMap(Site.init(rawValue:)).map(Destination.wall)
         }
         completionHandler()
     }
@@ -65,14 +82,22 @@ struct SetupView: View {
         NavigationStack {
             List {
                 Section {
-                    Text("Without a paid Apple developer account, iOS won't let Speedbump close Reels or Shorts. It notices them and keeps alerting you until you go through the wall or leave.")
+                    Text("Without a paid Apple developer account, iOS won't let Speedbump close Reels or Shorts once you're inside an app. It can put a wall in front of Instagram, and alert you if you reach Reels or Shorts.")
                 }
-                Section("Watch for Reels and Shorts") {
+                Section("Put a wall in front of Instagram") {
+                    Text("1. Open Shortcuts, tap Automation, then +")
+                    Text("2. Choose App, select Instagram, and leave Is Opened on")
+                    Text("3. Choose Run Immediately, and turn off Notify When Run")
+                    Text("4. Tap New Blank Automation, and add Check Instagram Speedbump")
+                    Text("Needs iOS 26 or later. Turn on Speedbump for Safari too, so Messages can open there with Reels walled.")
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
+                }
+                Section("Alert me in Reels and Shorts") {
                     if !notificationsAllowed {
                         Button("Allow notifications") { requestNotifications() }
                     }
                     BroadcastButton()
-                        .frame(height: 44)
                     Text("Your screen is read on this phone and never saved or sent. You'll need to start this again after locking your phone. In Settings, under Notifications, turn on Screen Sharing so alerts can appear.")
                         .font(.footnote)
                         .foregroundStyle(.secondary)
@@ -123,14 +148,52 @@ struct SetupView: View {
     }
 }
 
-/// Apple only lets a broadcast start from its own system button.
-struct BroadcastButton: UIViewRepresentable {
-    func makeUIView(context: Context) -> RPSystemBroadcastPickerView {
-        let picker = RPSystemBroadcastPickerView()
+/// Apple only lets a broadcast start from its own system picker, which offers no public way to
+/// set a label or to be triggered. So the visible button presses the picker's internal one.
+struct BroadcastButton: View {
+    @State private var picker = BroadcastPicker()
+    @State private var failed = false
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Button("Start watching my screen") {
+                failed = !picker.start()
+            }
+            .background(PickerHost(picker: picker).frame(width: 1, height: 1).opacity(0.01))
+            if failed {
+                Text("Couldn't open the broadcast picker. In Control Center, press and hold Screen Recording, then choose Speedbump.")
+                    .font(.footnote)
+                    .foregroundStyle(.red)
+            }
+        }
+    }
+}
+
+final class BroadcastPicker {
+    let view: RPSystemBroadcastPickerView = {
+        let picker = RPSystemBroadcastPickerView(frame: CGRect(x: 0, y: 0, width: 44, height: 44))
         picker.preferredExtension = Bundle.main.object(forInfoDictionaryKey: "SpeedbumpBroadcastExtension") as? String
         picker.showsMicrophoneButton = false
         return picker
+    }()
+
+    func start() -> Bool {
+        guard let button = Self.findButton(in: view) else { return false }
+        button.sendActions(for: .touchUpInside)
+        return true
     }
 
+    private static func findButton(in view: UIView) -> UIButton? {
+        if let button = view as? UIButton { return button }
+        for subview in view.subviews {
+            if let button = findButton(in: subview) { return button }
+        }
+        return nil
+    }
+}
+
+private struct PickerHost: UIViewRepresentable {
+    let picker: BroadcastPicker
+    func makeUIView(context: Context) -> RPSystemBroadcastPickerView { picker.view }
     func updateUIView(_ uiView: RPSystemBroadcastPickerView, context: Context) {}
 }

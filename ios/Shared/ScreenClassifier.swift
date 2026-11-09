@@ -9,6 +9,14 @@ enum Site: String, Codable, CaseIterable {
         case .youtube: return "YouTube Shorts"
         }
     }
+
+    /// Reopens the real app after the wall.
+    var appURL: URL {
+        switch self {
+        case .instagram: return URL(string: "instagram://app")!
+        case .youtube: return URL(string: "youtube://")!
+        }
+    }
 }
 
 /// A piece of recognised text. Coordinates run from 0 to 1, with the origin at the top left.
